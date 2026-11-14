@@ -25,6 +25,7 @@
         .btn-zalo { background: var(--zalo); color: white; margin-top: 15px; display: none; }
         .btn-small { padding: 6px 12px; font-size: 13px; width: auto; background: #f1f5f9; color: var(--primary); border: 1px solid #cbd5e1; }
         
+        /* Danh sách dự án */
         .project-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
         .project-info strong { color: var(--primary); font-size: 15px; display: block; margin-bottom: 4px; }
         .project-info small { color: #64748b; font-size: 12px; }
@@ -33,22 +34,26 @@
         .camera-container { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 350px; display: none; }
         #videoElement { width: 100%; display: block; object-fit: cover; }
         
+        /* Thanh trượt Zoom */
         #zoomContainer { display: none; position: absolute; top: 15px; width: 100%; padding: 0 30px; z-index: 10; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -10px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.7); border-radius: 2px; }
         
+        /* Nút chụp ảnh */
         .shutter-wrapper { position: absolute; bottom: 15px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 20; }
         .shutter-btn { width: 64px; height: 64px; background: rgba(255,255,255,0.9); border: 4px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .shutter-btn:active { transform: scale(0.9); }
         .shutter-btn .inner-circle { width: 48px; height: 48px; background: var(--danger); border-radius: 50%; }
 
+        /* Danh sách trạng thái Upload */
         .upload-item { padding: 12px; border-radius: 8px; background: #f1f5f9; margin-bottom: 8px; font-size: 14px; display: flex; gap: 10px; }
         .status-success i { color: var(--success); }
         .status-error i { color: var(--danger); }
         .status-pending i { color: #f59e0b; }
 
-        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 1000; font-size: 14px; }
+        /* Toast thông báo */
+        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 1000; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.5s; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
@@ -61,15 +66,15 @@
     </div>
 
     <div class="container">
-        <!-- 1. Danh sách dự án -->
+        <!-- 1. Danh sách dự án tải từ Google Sheets -->
         <div class="card" id="projectListCard">
             <h3><i class="fa-solid fa-server" style="color: var(--primary);"></i> Dự án đang quản lý</h3>
             <div id="projectListContent" style="font-size: 14px; color: #64748b;">
-                <i class="fa-solid fa-spinner fa-spin"></i> Đang tải từ hệ thống...
+                <i class="fa-solid fa-spinner fa-spin"></i> Đang đồng bộ từ hệ thống...
             </div>
         </div>
 
-        <!-- 2. Thêm dự án mới -->
+        <!-- 2. Thêm dự án mới (lưu vào Sheets) -->
         <div class="card">
             <h3><i class="fa-solid fa-map-pin" style="color: var(--danger);"></i> Cắm mốc dự án mới</h3>
             <input type="text" id="projectName" placeholder="Nhập tên dự án (VD: Du_An_A)">
@@ -78,7 +83,7 @@
             </button>
         </div>
 
-        <!-- 3. Camera (Hỗ trợ ImageCapture phần cứng) -->
+        <!-- 3. Camera (Hỗ trợ ImageCapture phần cứng & Zoom) -->
         <div class="card">
             <h3><i class="fa-solid fa-camera" style="color: var(--success);"></i> Camera Khảo Sát</h3>
             <button class="btn btn-success" id="startCameraBtn" onclick="startCamera()">
@@ -106,7 +111,7 @@
             </button>
         </div>
 
-        <!-- 4. Upload Status -->
+        <!-- 4. Upload Status Log -->
         <div class="card" id="uploadCard" style="display: none;">
             <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Trạng thái Drive</h3>
             <div id="uploadList"></div>
@@ -116,8 +121,8 @@
     <div id="toast"></div>
 
     <script>
-        // 🔴 THAY URL WEB APP CỦA BẠN VÀO ĐÂY:
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzzr1ayOTiOlCct8nS3U5XgRk6dPf6y0QZQ_fRg9eSuknCnkrdEu1UAvlxWE-5CG4wH/exec"; 
+        // 🔴 BẮT BUỘC: THAY URL WEB APP CỦA BẠN VÀO DÒNG NÀY:
+        const GAS_URL = "URL_WEB_APP_CUA_BAN_NAM_O_DAY"; 
 
         let globalProjects = [];
         let cachedLocation = null;
@@ -128,6 +133,7 @@
         // Khai báo biến lưu API chụp ảnh phần cứng
         let imageCaptureAPI = null;
 
+        // Khi load web: Tải danh sách từ Google Sheets
         window.onload = function() {
             fetch(GAS_URL).then(res => res.json()).then(data => {
                 globalProjects = data;
@@ -163,6 +169,7 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
+        // Lưu mới dự án vào Sheets
         function saveProjectLocation() {
             const name = document.getElementById('projectName').value.trim();
             if (!name) return showToast("⚠️ Vui lòng nhập tên dự án!");
@@ -178,11 +185,12 @@
                         renderProjectList();
                     }
                 });
-            }, err => showToast("❌ Lỗi GPS!"));
+            }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
         }
 
+        // Cập nhật lại định vị cho dự án cũ trên Sheets
         function updateProjectLocation(name, index) {
-            if(!confirm(`Xác nhận cập nhật toạ độ hiện tại làm mốc mới cho "${name}"?`)) return;
+            if(!confirm(`Xác nhận cập nhật toạ độ hiện tại làm mốc mới cho dự án "${name}"?`)) return;
             showToast("Đang lấy định vị mới...");
             navigator.geolocation.getCurrentPosition(pos => {
                 const lat = pos.coords.latitude, lng = pos.coords.longitude;
@@ -195,13 +203,13 @@
                         renderProjectList();
                     }
                 });
-            }, err => showToast("❌ Lỗi GPS!"));
+            }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
         }
 
-        // Mở Camera và Kích hoạt ImageCapture API
+        // Mở Camera & Cài đặt phần cứng (Zoom, Lấy nét, ImageCapture)
         function startCamera() {
             const video = document.getElementById('videoElement');
-            // Ép độ phân giải cao nhất (4K) để lấy nét tốt hơn
+            // Ép phân giải 4K để đảm bảo độ nét tốt nhất
             const constraints = { 
                 video: { 
                     facingMode: "environment",
@@ -219,24 +227,21 @@
                     
                     const track = stream.getVideoTracks()[0];
                     
-                    // Thử khởi tạo API chụp ảnh phần cứng (Rất tốt trên Chrome/Android)
-                    try {
-                        imageCaptureAPI = new window.ImageCapture(track);
-                    } catch (e) {
-                        console.log("Trình duyệt không hỗ trợ ImageCapture, sẽ dùng Canvas 4K.");
-                    }
+                    // Khởi tạo ImageCapture API (Rất hữu dụng trên Chrome/Android)
+                    try { imageCaptureAPI = new window.ImageCapture(track); } 
+                    catch (e) { console.log("Trình duyệt không hỗ trợ ImageCapture API."); }
 
                     setTimeout(() => {
                         try {
                             const capabilities = track.getCapabilities();
                             const settings = track.getSettings();
 
-                            // Ép lấy nét liên tục phần cứng
+                            // Ép lấy nét liên tục (Continuous Autofocus)
                             if (capabilities.focusMode) {
                                 track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(e => console.log(e));
                             }
 
-                            // Kích hoạt Zoom
+                            // Kích hoạt thanh trượt Zoom (Nếu máy hỗ trợ)
                             if (capabilities.zoom) {
                                 const zoomSlider = document.getElementById('zoomSlider');
                                 document.getElementById('zoomContainer').style.display = "block";
@@ -255,6 +260,7 @@
                 }).catch(() => showToast("❌ Lỗi mở camera! Vui lòng cấp quyền."));
         }
 
+        // Đệm vị trí GPS trong 2 phút để chụp liên tục không lag
         function updateLocationCache(cb) {
             navigator.geolocation.getCurrentPosition(pos => {
                 cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -263,19 +269,19 @@
             }, () => { if(cb) cb(); });
         }
 
-        // CHỤP ẢNH
+        // CHỤP ẢNH (ImageCapture API hoặc Fallback)
         async function takePhoto() {
             photoCounter++;
             const currentPhotoId = photoCounter;
-            addStatusLog(currentPhotoId, "Đang chụp ảnh...");
+            addStatusLog(currentPhotoId, "Đang chụp ảnh chất lượng cao...");
 
             const video = document.getElementById('videoElement');
-            // Hiệu ứng nháy màn hình
+            // Hiệu ứng nháy Camera
             video.style.opacity = 0.3; setTimeout(() => video.style.opacity = 1, 100);
 
             let photoBlob = null;
 
-            // Nếu máy hỗ trợ chụp từ phần cứng (Chrome Android) -> Chụp nét căng
+            // Nếu máy hỗ trợ chụp từ phần cứng -> Chụp nét căng
             if (imageCaptureAPI) {
                 try {
                     photoBlob = await imageCaptureAPI.takePhoto();
@@ -284,12 +290,12 @@
                     photoBlob = captureFromCanvas(video);
                 }
             } else {
-                // Phương án dự phòng cho iPhone Safari (Cắt ảnh 4K từ Video)
+                // Phương án dự phòng: Cắt ảnh tĩnh độ phân giải cao từ luồng Video
                 photoBlob = captureFromCanvas(video);
             }
 
             if(photoBlob) {
-                // 1. Chuyển Blob thành Base64 để gửi lên Apps Script
+                // 1. Chuyển Blob thành Base64 để gửi qua Google Apps Script
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const base64Data = e.target.result;
@@ -301,24 +307,24 @@
                 };
                 reader.readAsDataURL(photoBlob);
 
-                // 2. Lưu Blob để chia sẻ Zalo
-                sessionFiles.push(new File([photoBlob], "IMG_Duan_" + Date.now() + ".jpg", { type: "image/jpeg" }));
+                // 2. Lưu Blob vào mảng để chờ gom chia sẻ Zalo
+                sessionFiles.push(new File([photoBlob], "IMG_KhaoSat_" + Date.now() + ".jpg", { type: "image/jpeg" }));
                 document.getElementById('shareBtn').style.display = "flex";
                 document.getElementById('photoCount').innerText = sessionFiles.length;
             }
         }
 
-        // Hàm dự phòng (Canvas)
+        // Hàm dự phòng (Canvas) - Nén 1.0 (Giữ chất lượng 100%)
         function captureFromCanvas(video) {
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; 
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // Lấy chất lượng 100% (1.0)
-            const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
             
-            // Convert dataUrl sang Blob
+            const dataUrl = canvas.toDataURL('image/jpeg', 1.0); // 1.0 = Quality 100%
+            
+            // Convert Base64 sang Blob
             const byteString = atob(dataUrl.split(',')[1]);
             const arrayBuffer = new ArrayBuffer(byteString.length);
             const int8Array = new Uint8Array(arrayBuffer);
@@ -328,15 +334,16 @@
             return new Blob([int8Array], { type: 'image/jpeg' });
         }
 
+        // Upload ngầm lên Apps Script (Google Drive)
         function processAndUpload(base64Data, photoId) {
-            let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2; 
+            let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2; // Phạm vi nhận diện: 200m
             if (cachedLocation && globalProjects.length > 0) {
                 globalProjects.forEach(p => {
                     let dist = getDistanceFromLatLonInKm(cachedLocation.lat, cachedLocation.lng, p.lat, p.lng);
                     if (dist < minDistance) { minDistance = dist; nearestProject = p.name; }
                 });
             }
-            updateStatusLog(photoId, `Nhận diện: <b>${nearestProject}</b>...`, "status-pending", "fa-spinner fa-spin");
+            updateStatusLog(photoId, `Nhận diện: <b>${nearestProject}</b>. Đang upload...`, "status-pending", "fa-spinner fa-spin");
 
             fetch(GAS_URL, { 
                 method: 'POST', 
@@ -344,22 +351,24 @@
             })
             .then(res => res.json()).then(data => {
                 if(data.status === "success") updateStatusLog(photoId, `Đã lưu vào <b>${nearestProject}</b>`, "status-success", "fa-circle-check");
-                else updateStatusLog(photoId, `Lỗi: ${data.message}`, "status-error", "fa-circle-xmark");
+                else updateStatusLog(photoId, `Lỗi Apps Script: ${data.message}`, "status-error", "fa-circle-xmark");
             }).catch(() => updateStatusLog(photoId, `Lỗi mạng Internet`, "status-error", "fa-wifi"));
         }
 
+        // Gọi App chia sẻ của điện thoại (Share API)
         function shareAllPhotos() {
             if (sessionFiles.length === 0) return;
             if (navigator.canShare && navigator.canShare({ files: sessionFiles })) {
-                navigator.share({ files: sessionFiles, title: 'Ảnh Khảo Sát', text: 'Gửi từ GeoCamera' })
+                navigator.share({ files: sessionFiles, title: 'Ảnh Khảo Sát', text: 'Gửi từ GeoCamera Web' })
                 .then(() => { 
-                    showToast("✅ Đã chuyển sang Zalo/Mess.");
+                    showToast("✅ Đã chuyển sang App chat.");
                     sessionFiles = []; 
                     document.getElementById('shareBtn').style.display = "none"; 
-                });
-            } else showToast("❌ Thiết bị không hỗ trợ chia sẻ File nhiều ảnh.");
+                }).catch(e => console.log('Hủy chia sẻ', e));
+            } else showToast("❌ Trình duyệt không hỗ trợ Share File. Vui lòng dùng Chrome/Safari bản mới nhất.");
         }
 
+        // Quản lý List Trạng thái
         function addStatusLog(id, msg) {
             let list = document.getElementById('uploadList'), div = document.createElement('div');
             div.id = 'log_' + id; div.className = 'upload-item status-pending';
@@ -371,6 +380,7 @@
             if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Ảnh #${id}</b><br>${msg}</div>`; }
         }
 
+        // Tính khoảng cách Haversine
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371, dLat = (lat2-lat1)*(Math.PI/180), dLon = (lon2-lon1)*(Math.PI/180);
             var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2);
