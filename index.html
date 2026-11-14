@@ -34,6 +34,16 @@
         .camera-container { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 350px; display: none; }
         #videoElement { width: 100%; display: block; object-fit: cover; }
         
+        /* Hiệu ứng khung vuông lấy nét */
+        .focus-ring { position: absolute; width: 60px; height: 60px; border: 2px solid #eab308; box-shadow: 0 0 4px rgba(0,0,0,0.5); transform: translate(-50%, -50%) scale(1.5); opacity: 0; pointer-events: none; z-index: 15; }
+        .focus-ring.active { animation: focusAnim 1s ease-out forwards; }
+        @keyframes focusAnim { 
+            0% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } 
+        }
+        
         /* Thanh trượt Zoom */
         #zoomContainer { display: none; position: absolute; top: 15px; width: 100%; padding: 0 30px; z-index: 10; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
@@ -52,7 +62,6 @@
         .status-error i { color: var(--danger); }
         .status-pending i { color: #f59e0b; }
 
-        /* Toast thông báo */
         #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 1000; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.5s; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
@@ -66,7 +75,7 @@
     </div>
 
     <div class="container">
-        <!-- 1. Danh sách dự án tải từ Google Sheets -->
+        <!-- 1. Danh sách dự án -->
         <div class="card" id="projectListCard">
             <h3><i class="fa-solid fa-server" style="color: var(--primary);"></i> Dự án đang quản lý</h3>
             <div id="projectListContent" style="font-size: 14px; color: #64748b;">
@@ -74,7 +83,7 @@
             </div>
         </div>
 
-        <!-- 2. Thêm dự án mới (lưu vào Sheets) -->
+        <!-- 2. Thêm dự án mới -->
         <div class="card">
             <h3><i class="fa-solid fa-map-pin" style="color: var(--danger);"></i> Cắm mốc dự án mới</h3>
             <input type="text" id="projectName" placeholder="Nhập tên dự án (VD: Du_An_A)">
@@ -83,7 +92,7 @@
             </button>
         </div>
 
-        <!-- 3. Camera (Hỗ trợ ImageCapture phần cứng & Zoom) -->
+        <!-- 3. Camera (Hỗ trợ ImageCapture phần cứng, Zoom & Lấy nét chạm) -->
         <div class="card">
             <h3><i class="fa-solid fa-camera" style="color: var(--success);"></i> Camera Khảo Sát</h3>
             <button class="btn btn-success" id="startCameraBtn" onclick="startCamera()">
@@ -93,6 +102,9 @@
             <div class="camera-container" id="cameraContainer">
                 <video id="videoElement" autoplay playsinline></video>
                 
+                <!-- Ô vuông lấy nét chạm -->
+                <div id="focusRing" class="focus-ring"></div>
+
                 <div id="zoomContainer">
                     <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1">
                 </div>
@@ -130,7 +142,7 @@
         let photoCounter = 0;
         let sessionFiles = [];
         
-        // Khai báo biến lưu API chụp ảnh phần cứng
+        let currentStream = null;
         let imageCaptureAPI = null;
 
         // Khi load web: Tải danh sách từ Google Sheets
@@ -188,7 +200,7 @@
             }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
         }
 
-        // Cập nhật lại định vị cho dự án cũ trên Sheets
+        // Cập nhật định vị
         function updateProjectLocation(name, index) {
             if(!confirm(`Xác nhận cập nhật toạ độ hiện tại làm mốc mới cho dự án "${name}"?`)) return;
             showToast("Đang lấy định vị mới...");
@@ -206,42 +218,33 @@
             }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
         }
 
-        // Mở Camera & Cài đặt phần cứng (Zoom, Lấy nét, ImageCapture)
+        // Mở Camera
         function startCamera() {
             const video = document.getElementById('videoElement');
-            // Ép phân giải 4K để đảm bảo độ nét tốt nhất
             const constraints = { 
-                video: { 
-                    facingMode: "environment",
-                    width: { ideal: 3840 }, 
-                    height: { ideal: 2160 }
-                } 
+                video: { facingMode: "environment", width: { ideal: 3840 }, height: { ideal: 2160 } } 
             };
 
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
+                    currentStream = stream;
                     video.srcObject = stream;
                     document.getElementById('cameraContainer').style.display = "block";
                     document.getElementById('startCameraBtn').style.display = "none";
                     document.getElementById('uploadCard').style.display = "block";
                     
                     const track = stream.getVideoTracks()[0];
-                    
-                    // Khởi tạo ImageCapture API (Rất hữu dụng trên Chrome/Android)
-                    try { imageCaptureAPI = new window.ImageCapture(track); } 
-                    catch (e) { console.log("Trình duyệt không hỗ trợ ImageCapture API."); }
+                    try { imageCaptureAPI = new window.ImageCapture(track); } catch (e) {}
 
                     setTimeout(() => {
                         try {
                             const capabilities = track.getCapabilities();
                             const settings = track.getSettings();
 
-                            // Ép lấy nét liên tục (Continuous Autofocus)
                             if (capabilities.focusMode) {
                                 track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(e => console.log(e));
                             }
 
-                            // Kích hoạt thanh trượt Zoom (Nếu máy hỗ trợ)
                             if (capabilities.zoom) {
                                 const zoomSlider = document.getElementById('zoomSlider');
                                 document.getElementById('zoomContainer').style.display = "block";
@@ -260,7 +263,49 @@
                 }).catch(() => showToast("❌ Lỗi mở camera! Vui lòng cấp quyền."));
         }
 
-        // Đệm vị trí GPS trong 2 phút để chụp liên tục không lag
+        // === THUẬT TOÁN CHẠM ĐỂ LẤY NÉT (TAP TO FOCUS) ===
+        document.getElementById('videoElement').addEventListener('click', async function(e) {
+            if (!currentStream) return;
+            const video = e.target;
+            const rect = video.getBoundingClientRect();
+            
+            // Tính toán toạ độ vị trí chạm
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Hiển thị ô vuông nhấp nháy tại vị trí chạm
+            const focusRing = document.getElementById('focusRing');
+            focusRing.style.left = x + 'px';
+            focusRing.style.top = y + 'px';
+            focusRing.classList.remove('active');
+            void focusRing.offsetWidth; // Kích hoạt lại animation
+            focusRing.classList.add('active');
+
+            try {
+                const track = currentStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                const advancedConstraints = [];
+
+                // Quy đổi toạ độ theo chuẩn API phần cứng (0.0 đến 1.0)
+                if (capabilities.pointsOfInterest) {
+                    advancedConstraints.push({ pointsOfInterest: [{ x: x / rect.width, y: y / rect.height }] });
+                }
+
+                // Ép Camera lấy nét thủ công tại điểm chạm, sau 2 giây thả ra lại cho Tự động lấy nét
+                if (capabilities.focusMode) {
+                    await track.applyConstraints({ advanced: [...advancedConstraints, { focusMode: "single-shot" }] });
+                    setTimeout(async () => {
+                        await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+                    }, 2000);
+                } else if (advancedConstraints.length > 0) {
+                    await track.applyConstraints({ advanced: advancedConstraints });
+                }
+            } catch (err) {
+                console.log("Thiết bị không hỗ trợ lấy nét chạm qua Web API.");
+            }
+        });
+        // ====================================================
+
         function updateLocationCache(cb) {
             navigator.geolocation.getCurrentPosition(pos => {
                 cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -269,33 +314,24 @@
             }, () => { if(cb) cb(); });
         }
 
-        // CHỤP ẢNH (ImageCapture API hoặc Fallback)
         async function takePhoto() {
             photoCounter++;
             const currentPhotoId = photoCounter;
-            addStatusLog(currentPhotoId, "Đang chụp ảnh chất lượng cao...");
+            addStatusLog(currentPhotoId, "Đang chụp ảnh...");
 
             const video = document.getElementById('videoElement');
-            // Hiệu ứng nháy Camera
             video.style.opacity = 0.3; setTimeout(() => video.style.opacity = 1, 100);
 
             let photoBlob = null;
-
-            // Nếu máy hỗ trợ chụp từ phần cứng -> Chụp nét căng
             if (imageCaptureAPI) {
                 try {
                     photoBlob = await imageCaptureAPI.takePhoto();
-                } catch (e) {
-                    console.log("Lỗi ImageCapture, fallback sang canvas");
-                    photoBlob = captureFromCanvas(video);
-                }
+                } catch (e) { photoBlob = captureFromCanvas(video); }
             } else {
-                // Phương án dự phòng: Cắt ảnh tĩnh độ phân giải cao từ luồng Video
                 photoBlob = captureFromCanvas(video);
             }
 
             if(photoBlob) {
-                // 1. Chuyển Blob thành Base64 để gửi qua Google Apps Script
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const base64Data = e.target.result;
@@ -307,36 +343,27 @@
                 };
                 reader.readAsDataURL(photoBlob);
 
-                // 2. Lưu Blob vào mảng để chờ gom chia sẻ Zalo
                 sessionFiles.push(new File([photoBlob], "IMG_KhaoSat_" + Date.now() + ".jpg", { type: "image/jpeg" }));
                 document.getElementById('shareBtn').style.display = "flex";
                 document.getElementById('photoCount').innerText = sessionFiles.length;
             }
         }
 
-        // Hàm dự phòng (Canvas) - Nén 1.0 (Giữ chất lượng 100%)
         function captureFromCanvas(video) {
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth; 
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 1.0); // 1.0 = Quality 100%
-            
-            // Convert Base64 sang Blob
+            const dataUrl = canvas.toDataURL('image/jpeg', 1.0); 
             const byteString = atob(dataUrl.split(',')[1]);
             const arrayBuffer = new ArrayBuffer(byteString.length);
             const int8Array = new Uint8Array(arrayBuffer);
-            for (let i = 0; i < byteString.length; i++) {
-                int8Array[i] = byteString.charCodeAt(i);
-            }
+            for (let i = 0; i < byteString.length; i++) int8Array[i] = byteString.charCodeAt(i);
             return new Blob([int8Array], { type: 'image/jpeg' });
         }
 
-        // Upload ngầm lên Apps Script (Google Drive)
         function processAndUpload(base64Data, photoId) {
-            let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2; // Phạm vi nhận diện: 200m
+            let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2;
             if (cachedLocation && globalProjects.length > 0) {
                 globalProjects.forEach(p => {
                     let dist = getDistanceFromLatLonInKm(cachedLocation.lat, cachedLocation.lng, p.lat, p.lng);
@@ -355,7 +382,6 @@
             }).catch(() => updateStatusLog(photoId, `Lỗi mạng Internet`, "status-error", "fa-wifi"));
         }
 
-        // Gọi App chia sẻ của điện thoại (Share API)
         function shareAllPhotos() {
             if (sessionFiles.length === 0) return;
             if (navigator.canShare && navigator.canShare({ files: sessionFiles })) {
@@ -365,10 +391,9 @@
                     sessionFiles = []; 
                     document.getElementById('shareBtn').style.display = "none"; 
                 }).catch(e => console.log('Hủy chia sẻ', e));
-            } else showToast("❌ Trình duyệt không hỗ trợ Share File. Vui lòng dùng Chrome/Safari bản mới nhất.");
+            } else showToast("❌ Trình duyệt không hỗ trợ Share File.");
         }
 
-        // Quản lý List Trạng thái
         function addStatusLog(id, msg) {
             let list = document.getElementById('uploadList'), div = document.createElement('div');
             div.id = 'log_' + id; div.className = 'upload-item status-pending';
@@ -380,7 +405,6 @@
             if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Ảnh #${id}</b><br>${msg}</div>`; }
         }
 
-        // Tính khoảng cách Haversine
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371, dLat = (lat2-lat1)*(Math.PI/180), dLon = (lon2-lon1)*(Math.PI/180);
             var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2);
