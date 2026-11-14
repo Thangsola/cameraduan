@@ -25,38 +25,42 @@
         .btn-zalo { background: var(--zalo); color: white; margin-top: 15px; display: none; }
         .btn-small { padding: 6px 12px; font-size: 13px; width: auto; background: #f1f5f9; color: var(--primary); border: 1px solid #cbd5e1; }
         
-        /* Danh sách dự án */
         .project-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
         .project-info strong { color: var(--primary); font-size: 15px; display: block; margin-bottom: 4px; }
         .project-info small { color: #64748b; font-size: 12px; }
 
-        /* Giao diện Camera */
+        /* Camera UI */
         .camera-container { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 350px; display: none; }
         #videoElement { width: 100%; display: block; object-fit: cover; }
         
-        /* Hiệu ứng khung vuông lấy nét */
+        /* Flash & Focus */
+        .flash-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 20; display: none; border: 1px solid rgba(255,255,255,0.3); }
+        .flash-btn.active { background: #eab308; color: #000; }
+        
         .focus-ring { position: absolute; width: 60px; height: 60px; border: 2px solid #eab308; box-shadow: 0 0 4px rgba(0,0,0,0.5); transform: translate(-50%, -50%) scale(1.5); opacity: 0; pointer-events: none; z-index: 15; }
         .focus-ring.active { animation: focusAnim 1s ease-out forwards; }
-        @keyframes focusAnim { 
-            0% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 
-            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
-            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } 
-        }
+        @keyframes focusAnim { 0% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
         
-        /* Thanh trượt Zoom */
-        #zoomContainer { display: none; position: absolute; top: 15px; width: 100%; padding: 0 30px; z-index: 10; }
+        /* Zoom */
+        #zoomContainer { display: none; position: absolute; top: 15px; left: 15px; width: calc(100% - 80px); padding: 0 10px; z-index: 10; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -10px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.7); border-radius: 2px; }
         
-        /* Nút chụp ảnh */
+        /* Shutter */
         .shutter-wrapper { position: absolute; bottom: 15px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 20; }
         .shutter-btn { width: 64px; height: 64px; background: rgba(255,255,255,0.9); border: 4px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .shutter-btn:active { transform: scale(0.9); }
         .shutter-btn .inner-circle { width: 48px; height: 48px; background: var(--danger); border-radius: 50%; }
 
-        /* Danh sách trạng thái Upload */
+        /* Gallery (Thư viện ảnh mini) */
+        .gallery-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-top: 10px; display: none; }
+        .gallery-item { position: relative; width: 70px; height: 70px; border-radius: 8px; flex-shrink: 0; border: 3px solid transparent; transition: 0.2s; overflow: hidden; cursor: pointer; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-item.selected { border-color: var(--success); }
+        .gallery-item.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 2px; right: 2px; color: var(--success); background: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+        /* Upload Logs */
         .upload-item { padding: 12px; border-radius: 8px; background: #f1f5f9; margin-bottom: 8px; font-size: 14px; display: flex; gap: 10px; }
         .status-success i { color: var(--success); }
         .status-error i { color: var(--danger); }
@@ -83,7 +87,7 @@
             </div>
         </div>
 
-        <!-- 2. Thêm dự án mới -->
+        <!-- 2. Thêm dự án -->
         <div class="card">
             <h3><i class="fa-solid fa-map-pin" style="color: var(--danger);"></i> Cắm mốc dự án mới</h3>
             <input type="text" id="projectName" placeholder="Nhập tên dự án (VD: Du_An_A)">
@@ -92,22 +96,22 @@
             </button>
         </div>
 
-        <!-- 3. Camera (Hỗ trợ ImageCapture phần cứng, Zoom & Lấy nét chạm) -->
+        <!-- 3. Camera (Flash, Zoom, Focus) -->
         <div class="card">
             <h3><i class="fa-solid fa-camera" style="color: var(--success);"></i> Camera Khảo Sát</h3>
             <button class="btn btn-success" id="startCameraBtn" onclick="startCamera()">
-                <i class="fa-solid fa-video"></i> Bật Camera Khảo Sát
+                <i class="fa-solid fa-video"></i> Bật Camera
             </button>
             
             <div class="camera-container" id="cameraContainer">
                 <video id="videoElement" autoplay playsinline></video>
                 
-                <!-- Ô vuông lấy nét chạm -->
+                <!-- Nút Flash -->
+                <div id="flashBtn" class="flash-btn" onclick="toggleFlash()"><i class="fa-solid fa-bolt"></i></div>
+                <!-- Vòng lấy nét chạm -->
                 <div id="focusRing" class="focus-ring"></div>
-
-                <div id="zoomContainer">
-                    <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1">
-                </div>
+                <!-- Thanh trượt Zoom -->
+                <div id="zoomContainer"><input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1"></div>
 
                 <div class="shutter-wrapper">
                     <div class="shutter-btn" onclick="takePhoto()">
@@ -118,12 +122,15 @@
             
             <canvas id="canvas" style="display:none;"></canvas>
             
-            <button class="btn btn-zalo" id="shareBtn" onclick="shareAllPhotos()">
+            <!-- Khu vực thư viện ảnh chọn lọc Zalo -->
+            <div id="galleryContainer" class="gallery-container"></div>
+
+            <button class="btn btn-zalo" id="shareBtn" onclick="shareSelectedPhotos()">
                 <i class="fa-solid fa-share-nodes"></i> Gửi <span id="photoCount" style="margin: 0 4px; font-weight: bold;">0</span> ảnh qua Zalo
             </button>
         </div>
 
-        <!-- 4. Upload Status Log -->
+        <!-- 4. Upload Status -->
         <div class="card" id="uploadCard" style="display: none;">
             <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Trạng thái Drive</h3>
             <div id="uploadList"></div>
@@ -133,23 +140,24 @@
     <div id="toast"></div>
 
     <script>
-        // 🔴 BẮT BUỘC: THAY URL WEB APP CỦA BẠN VÀO DÒNG NÀY:
+        // 🔴 BẮT BUỘC: THAY URL WEB APP CỦA BẠN VÀO ĐÂY:
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzzr1ayOTiOlCct8nS3U5XgRk6dPf6y0QZQ_fRg9eSuknCnkrdEu1UAvlxWE-5CG4wH/exec"; 
 
         let globalProjects = [];
         let cachedLocation = null;
         let lastLocationTime = 0;
         let photoCounter = 0;
-        let sessionFiles = [];
         
         let currentStream = null;
         let imageCaptureAPI = null;
+        let isFlashOn = false;
+        
+        // Mảng chứa các ảnh chụp trong phiên (phục vụ Gallery)
+        let galleryItems = []; 
 
-        // Khi load web: Tải danh sách từ Google Sheets
         window.onload = function() {
             fetch(GAS_URL).then(res => res.json()).then(data => {
-                globalProjects = data;
-                renderProjectList();
+                globalProjects = data; renderProjectList();
             }).catch(err => {
                 document.getElementById('projectListContent').innerHTML = "❌ Lỗi mạng: Không tải được danh sách.";
             });
@@ -176,147 +184,124 @@
 
         function showToast(message) {
             const toast = document.getElementById("toast");
-            toast.innerText = message;
-            toast.className = "show";
+            toast.innerText = message; toast.className = "show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // Lưu mới dự án vào Sheets
         function saveProjectLocation() {
             const name = document.getElementById('projectName').value.trim();
             if (!name) return showToast("⚠️ Vui lòng nhập tên dự án!");
             showToast("Đang lấy định vị...");
             navigator.geolocation.getCurrentPosition(pos => {
-                const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "saveLocation", projectName: name, lat, lng }) })
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "saveLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude }) })
                 .then(res => res.json()).then(data => {
                     if(data.status === "success") {
-                        showToast(`✅ Đã thêm: ${name}`);
-                        document.getElementById('projectName').value = '';
-                        globalProjects.push({name, lat, lng});
-                        renderProjectList();
+                        showToast(`✅ Đã thêm: ${name}`); document.getElementById('projectName').value = '';
+                        globalProjects.push({name, lat: pos.coords.latitude, lng: pos.coords.longitude}); renderProjectList();
                     }
                 });
-            }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
+            }, err => showToast("❌ Lỗi GPS!"));
         }
 
-        // Cập nhật định vị
         function updateProjectLocation(name, index) {
-            if(!confirm(`Xác nhận cập nhật toạ độ hiện tại làm mốc mới cho dự án "${name}"?`)) return;
-            showToast("Đang lấy định vị mới...");
+            if(!confirm(`Cập nhật mốc mới cho "${name}"?`)) return;
+            showToast("Đang lấy định vị...");
             navigator.geolocation.getCurrentPosition(pos => {
-                const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "updateLocation", projectName: name, lat, lng }) })
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "updateLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude }) })
                 .then(res => res.json()).then(data => {
                     if(data.status === "success") {
                         showToast(`✅ Đã cập nhật: ${name}`);
-                        globalProjects[index].lat = lat;
-                        globalProjects[index].lng = lng;
-                        renderProjectList();
+                        globalProjects[index].lat = pos.coords.latitude; globalProjects[index].lng = pos.coords.longitude; renderProjectList();
                     }
                 });
-            }, err => showToast("❌ Lỗi GPS! Vui lòng bật vị trí."));
+            }, err => showToast("❌ Lỗi GPS!"));
         }
 
-        // Mở Camera
+        // --- MỞ CAMERA ---
         function startCamera() {
             const video = document.getElementById('videoElement');
-            const constraints = { 
-                video: { facingMode: "environment", width: { ideal: 3840 }, height: { ideal: 2160 } } 
-            };
+            const constraints = { video: { facingMode: "environment", width: { ideal: 3840 }, height: { ideal: 2160 } } };
 
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
-                    currentStream = stream;
-                    video.srcObject = stream;
+                    currentStream = stream; video.srcObject = stream;
                     document.getElementById('cameraContainer').style.display = "block";
                     document.getElementById('startCameraBtn').style.display = "none";
                     document.getElementById('uploadCard').style.display = "block";
                     
                     const track = stream.getVideoTracks()[0];
-                    try { imageCaptureAPI = new window.ImageCapture(track); } catch (e) {}
+                    try { imageCaptureAPI = new window.ImageCapture(track); } catch(e){}
 
                     setTimeout(() => {
                         try {
                             const capabilities = track.getCapabilities();
                             const settings = track.getSettings();
 
-                            if (capabilities.focusMode) {
-                                track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(e => console.log(e));
-                            }
-
+                            // Bật nút Flash nếu máy hỗ trợ
+                            if (capabilities.torch) { document.getElementById('flashBtn').style.display = "flex"; }
+                            if (capabilities.focusMode) { track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(e=>e); }
                             if (capabilities.zoom) {
                                 const zoomSlider = document.getElementById('zoomSlider');
                                 document.getElementById('zoomContainer').style.display = "block";
-                                zoomSlider.min = capabilities.zoom.min;
-                                zoomSlider.max = capabilities.zoom.max;
-                                zoomSlider.step = capabilities.zoom.step;
-                                zoomSlider.value = settings.zoom;
-                                zoomSlider.oninput = function(e) {
-                                    track.applyConstraints({ advanced: [{ zoom: parseFloat(e.target.value) }] });
-                                };
+                                zoomSlider.min = capabilities.zoom.min; zoomSlider.max = capabilities.zoom.max; zoomSlider.step = capabilities.zoom.step; zoomSlider.value = settings.zoom;
+                                zoomSlider.oninput = function(e) { track.applyConstraints({ advanced: [{ zoom: parseFloat(e.target.value) }] }); };
                             }
-                        } catch (err) {}
+                        } catch(err){}
                     }, 1000);
-
                     updateLocationCache();
-                }).catch(() => showToast("❌ Lỗi mở camera! Vui lòng cấp quyền."));
+                }).catch(() => showToast("❌ Lỗi mở camera!"));
         }
 
-        // === THUẬT TOÁN CHẠM ĐỂ LẤY NÉT (TAP TO FOCUS) ===
+        // --- BẬT/TẮT FLASH ---
+        async function toggleFlash() {
+            if (!currentStream) return;
+            isFlashOn = !isFlashOn;
+            const btn = document.getElementById('flashBtn');
+            const track = currentStream.getVideoTracks()[0];
+            try {
+                await track.applyConstraints({ advanced: [{ torch: isFlashOn }] });
+                if(isFlashOn) btn.classList.add('active'); else btn.classList.remove('active');
+            } catch (err) { showToast("Máy không hỗ trợ Flash"); }
+        }
+
+        // --- CHẠM LẤY NÉT ---
         document.getElementById('videoElement').addEventListener('click', async function(e) {
             if (!currentStream) return;
-            const video = e.target;
-            const rect = video.getBoundingClientRect();
-            
-            // Tính toán toạ độ vị trí chạm
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const video = e.target; const rect = video.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
 
-            // Hiển thị ô vuông nhấp nháy tại vị trí chạm
             const focusRing = document.getElementById('focusRing');
-            focusRing.style.left = x + 'px';
-            focusRing.style.top = y + 'px';
-            focusRing.classList.remove('active');
-            void focusRing.offsetWidth; // Kích hoạt lại animation
-            focusRing.classList.add('active');
+            focusRing.style.left = x + 'px'; focusRing.style.top = y + 'px';
+            focusRing.classList.remove('active'); void focusRing.offsetWidth; focusRing.classList.add('active');
 
             try {
-                const track = currentStream.getVideoTracks()[0];
-                const capabilities = track.getCapabilities();
-                const advancedConstraints = [];
-
-                // Quy đổi toạ độ theo chuẩn API phần cứng (0.0 đến 1.0)
-                if (capabilities.pointsOfInterest) {
-                    advancedConstraints.push({ pointsOfInterest: [{ x: x / rect.width, y: y / rect.height }] });
-                }
-
-                // Ép Camera lấy nét thủ công tại điểm chạm, sau 2 giây thả ra lại cho Tự động lấy nét
+                const track = currentStream.getVideoTracks()[0]; const capabilities = track.getCapabilities();
+                const adv = [];
+                if (capabilities.pointsOfInterest) adv.push({ pointsOfInterest: [{ x: x/rect.width, y: y/rect.height }] });
                 if (capabilities.focusMode) {
-                    await track.applyConstraints({ advanced: [...advancedConstraints, { focusMode: "single-shot" }] });
-                    setTimeout(async () => {
-                        await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
-                    }, 2000);
-                } else if (advancedConstraints.length > 0) {
-                    await track.applyConstraints({ advanced: advancedConstraints });
-                }
-            } catch (err) {
-                console.log("Thiết bị không hỗ trợ lấy nét chạm qua Web API.");
-            }
+                    await track.applyConstraints({ advanced: [...adv, { focusMode: "single-shot" }] });
+                    setTimeout(async () => { await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }); }, 2000);
+                } else if(adv.length > 0) { await track.applyConstraints({ advanced: adv }); }
+            } catch (err) {}
         });
-        // ====================================================
+
+        // Hàm tạo tên file Ngày Giờ chuẩn
+        function getFormattedDateTime() {
+            const d = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+        }
 
         function updateLocationCache(cb) {
             navigator.geolocation.getCurrentPosition(pos => {
-                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                lastLocationTime = Date.now();
+                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; lastLocationTime = Date.now();
                 if(cb) cb();
             }, () => { if(cb) cb(); });
         }
 
+        // --- CHỤP ẢNH ---
         async function takePhoto() {
-            photoCounter++;
-            const currentPhotoId = photoCounter;
+            photoCounter++; const currentPhotoId = photoCounter;
             addStatusLog(currentPhotoId, "Đang chụp ảnh...");
 
             const video = document.getElementById('videoElement');
@@ -324,45 +309,96 @@
 
             let photoBlob = null;
             if (imageCaptureAPI) {
-                try {
-                    photoBlob = await imageCaptureAPI.takePhoto();
-                } catch (e) { photoBlob = captureFromCanvas(video); }
-            } else {
-                photoBlob = captureFromCanvas(video);
-            }
+                try { photoBlob = await imageCaptureAPI.takePhoto(); } catch (e) { photoBlob = captureFromCanvas(video); }
+            } else { photoBlob = captureFromCanvas(video); }
 
             if(photoBlob) {
+                // Tạo tên file ngày giờ
+                const fileName = `IMG_${getFormattedDateTime()}.jpg`;
+
+                // 1. Đẩy Drive ngầm
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const base64Data = e.target.result;
                     if (!cachedLocation || (Date.now() - lastLocationTime > 120000)) {
-                        updateLocationCache(() => processAndUpload(base64Data, currentPhotoId));
-                    } else {
-                        processAndUpload(base64Data, currentPhotoId);
-                    }
+                        updateLocationCache(() => processAndUpload(base64Data, currentPhotoId, fileName));
+                    } else { processAndUpload(base64Data, currentPhotoId, fileName); }
                 };
                 reader.readAsDataURL(photoBlob);
 
-                sessionFiles.push(new File([photoBlob], "IMG_KhaoSat_" + Date.now() + ".jpg", { type: "image/jpeg" }));
-                document.getElementById('shareBtn').style.display = "flex";
-                document.getElementById('photoCount').innerText = sessionFiles.length;
+                // 2. Thêm vào Gallery Mini (Mặc định được chọn)
+                const fileObj = new File([photoBlob], fileName, { type: "image/jpeg" });
+                const thumbUrl = URL.createObjectURL(photoBlob);
+                
+                const item = { id: currentPhotoId, file: fileObj, url: thumbUrl, selected: true };
+                galleryItems.push(item);
+                renderGallery();
             }
         }
 
+        // Canvas dự phòng
         function captureFromCanvas(video) {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const dataUrl = canvas.toDataURL('image/jpeg', 1.0); 
-            const byteString = atob(dataUrl.split(',')[1]);
-            const arrayBuffer = new ArrayBuffer(byteString.length);
+            const byteString = atob(dataUrl.split(',')[1]); const arrayBuffer = new ArrayBuffer(byteString.length);
             const int8Array = new Uint8Array(arrayBuffer);
             for (let i = 0; i < byteString.length; i++) int8Array[i] = byteString.charCodeAt(i);
             return new Blob([int8Array], { type: 'image/jpeg' });
         }
 
-        function processAndUpload(base64Data, photoId) {
+        // --- RENDER GALLERY CHỌN ẢNH ZALO ---
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer');
+            const shareBtn = document.getElementById('shareBtn');
+            const countSpan = document.getElementById('photoCount');
+            
+            if (galleryItems.length > 0) {
+                container.style.display = "flex"; shareBtn.style.display = "flex";
+            } else {
+                container.style.display = "none"; shareBtn.style.display = "none"; return;
+            }
+
+            container.innerHTML = '';
+            let selectedCount = 0;
+
+            galleryItems.forEach((item, index) => {
+                if (item.selected) selectedCount++;
+                const div = document.createElement('div');
+                div.className = `gallery-item ${item.selected ? 'selected' : ''}`;
+                div.onclick = () => toggleGalleryItem(index);
+                div.innerHTML = `<img src="${item.url}" />`;
+                container.appendChild(div);
+            });
+
+            countSpan.innerText = selectedCount;
+            // Tự cuộn gallery tới ảnh mới nhất
+            container.scrollLeft = container.scrollWidth;
+        }
+
+        function toggleGalleryItem(index) {
+            galleryItems[index].selected = !galleryItems[index].selected;
+            renderGallery();
+        }
+
+        // --- GỬI ZALO NHỮNG ẢNH ĐÃ CHỌN ---
+        function shareSelectedPhotos() {
+            const filesToShare = galleryItems.filter(i => i.selected).map(i => i.file);
+            if (filesToShare.length === 0) return showToast("⚠️ Hãy chạm vào ảnh bên dưới để chọn ít nhất 1 ảnh!");
+            
+            if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
+                navigator.share({ files: filesToShare, title: 'Ảnh Khảo Sát', text: 'Gửi từ GeoCamera' })
+                .then(() => { 
+                    showToast("✅ Đã chuyển qua Zalo.");
+                    // Reset lại gallery
+                    galleryItems = []; renderGallery();
+                }).catch(e => console.log(e));
+            } else { showToast("❌ Thiết bị không hỗ trợ chia sẻ File."); }
+        }
+
+        // --- UPLOAD GOOGLE DRIVE ---
+        function processAndUpload(base64Data, photoId, fileName) {
             let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2;
             if (cachedLocation && globalProjects.length > 0) {
                 globalProjects.forEach(p => {
@@ -374,24 +410,12 @@
 
             fetch(GAS_URL, { 
                 method: 'POST', 
-                body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", fileName: "IMG_" + Date.now() + ".jpg", projectName: nearestProject }) 
+                body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", fileName: fileName, projectName: nearestProject }) 
             })
             .then(res => res.json()).then(data => {
-                if(data.status === "success") updateStatusLog(photoId, `Đã lưu vào <b>${nearestProject}</b>`, "status-success", "fa-circle-check");
-                else updateStatusLog(photoId, `Lỗi Apps Script: ${data.message}`, "status-error", "fa-circle-xmark");
+                if(data.status === "success") updateStatusLog(photoId, `Đã lưu <b>${fileName}</b> vào <b>${nearestProject}</b>`, "status-success", "fa-circle-check");
+                else updateStatusLog(photoId, `Lỗi: ${data.message}`, "status-error", "fa-circle-xmark");
             }).catch(() => updateStatusLog(photoId, `Lỗi mạng Internet`, "status-error", "fa-wifi"));
-        }
-
-        function shareAllPhotos() {
-            if (sessionFiles.length === 0) return;
-            if (navigator.canShare && navigator.canShare({ files: sessionFiles })) {
-                navigator.share({ files: sessionFiles, title: 'Ảnh Khảo Sát', text: 'Gửi từ GeoCamera Web' })
-                .then(() => { 
-                    showToast("✅ Đã chuyển sang App chat.");
-                    sessionFiles = []; 
-                    document.getElementById('shareBtn').style.display = "none"; 
-                }).catch(e => console.log('Hủy chia sẻ', e));
-            } else showToast("❌ Trình duyệt không hỗ trợ Share File.");
         }
 
         function addStatusLog(id, msg) {
@@ -404,7 +428,6 @@
             let el = document.getElementById('log_' + id);
             if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Ảnh #${id}</b><br>${msg}</div>`; }
         }
-
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371, dLat = (lat2-lat1)*(Math.PI/180), dLon = (lon2-lon1)*(Math.PI/180);
             var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2);
