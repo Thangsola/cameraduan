@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GeoCamera Gốc Pro</title>
+    <title>GeoCamera Offline Pro</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #4361ee; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; --card: #ffffff; --text: #334155; --zalo: #0068ff; }
+        :root { --primary: #4361ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --bg: #f8fafc; --card: #ffffff; --text: #334155; --zalo: #0068ff; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
         
@@ -15,32 +15,27 @@
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .card h3 { font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.2s; }
-        input[type="text"]:focus { border-color: var(--primary); }
-        
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-bottom: 12px; outline: none; }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn:active { opacity: 0.8; transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; font-size: 18px; }
+        .btn-success { background: var(--success); color: white; font-size: 17px; }
+        .btn-warning { background: var(--warning); color: white; margin-top: 10px; }
         .btn-zalo { background: var(--zalo); color: white; margin-top: 15px; display: none; }
-        .btn-small { padding: 6px 12px; font-size: 13px; width: auto; background: #f1f5f9; color: var(--primary); border: 1px solid #cbd5e1; }
         
-        .project-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
-        .project-info strong { color: var(--primary); font-size: 15px; display: block; margin-bottom: 4px; }
-        .project-info small { color: #64748b; font-size: 12px; }
-
-        /* Gallery (Thư viện ảnh mini) */
+        .offline-status { background: #fffbeb; border: 1px solid #fcd34d; color: #b45309; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; display: none; }
+        
+        /* Gallery Zalo */
         .gallery-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-top: 10px; display: none; }
         .gallery-item { position: relative; width: 80px; height: 80px; border-radius: 8px; flex-shrink: 0; border: 3px solid transparent; transition: 0.2s; overflow: hidden; cursor: pointer; }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
         .gallery-item.selected { border-color: var(--success); }
-        .gallery-item.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 4px; right: 4px; color: var(--success); background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .gallery-item.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 4px; right: 4px; color: var(--success); background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
 
-        /* Upload Logs */
         .upload-item { padding: 12px; border-radius: 8px; background: #f1f5f9; margin-bottom: 8px; font-size: 14px; display: flex; gap: 10px; }
         .status-success i { color: var(--success); }
         .status-error i { color: var(--danger); }
-        .status-pending i { color: #f59e0b; }
+        .status-pending i { color: var(--warning); }
 
         #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 1000; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.5s; }
@@ -51,49 +46,46 @@
 <body>
 
     <div class="header">
-        <h2><i class="fa-solid fa-location-crosshairs"></i> GeoCamera Khảo Sát</h2>
+        <h2><i class="fa-solid fa-location-crosshairs"></i> GeoCamera Offline Pro</h2>
     </div>
 
     <div class="container">
         <!-- 1. Danh sách dự án -->
         <div class="card" id="projectListCard">
             <h3><i class="fa-solid fa-server" style="color: var(--primary);"></i> Dự án đang quản lý (Google Sheets)</h3>
-            <div id="projectListContent" style="font-size: 14px; color: #64748b;">
-                <i class="fa-solid fa-spinner fa-spin"></i> Đang đồng bộ từ hệ thống...
-            </div>
+            <div id="projectListContent" style="font-size: 14px; color: #64748b;">⏳ Đang đồng bộ...</div>
         </div>
 
-        <!-- 2. Thêm dự án -->
-        <div class="card">
-            <h3><i class="fa-solid fa-map-pin" style="color: var(--danger);"></i> Cắm mốc dự án mới</h3>
-            <input type="text" id="projectName" placeholder="Nhập tên dự án (VD: Du_An_A)">
-            <button class="btn btn-primary" onclick="saveProjectLocation()">
-                <i class="fa-solid fa-location-dot"></i> Lưu Tọa Độ Hiện Tại
-            </button>
+        <!-- 2. Hộp thoại Offline -->
+        <div class="offline-status" id="offlineAlert">
+            <span><i class="fa-solid fa-cloud-arrow-up"></i> Có <span id="offlineCount">0</span> ảnh đang chờ lên mạng</span>
+            <button class="btn btn-warning" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="syncOfflinePhotos()">Đẩy lên Drive</button>
         </div>
 
         <!-- 3. CAMERA GỐC -->
         <div class="card">
-            <h3><i class="fa-solid fa-camera-retro" style="color: var(--success);"></i> Chụp Ảnh Nghiệm Thu (Nét 100%)</h3>
+            <h3><i class="fa-solid fa-camera-retro" style="color: var(--success);"></i> Chụp Ảnh Nghiệm Thu</h3>
             
-            <!-- Trình gọi Camera của hệ điều hành -->
+            <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="autoLoop" checked style="width: 22px; height: 22px; accent-color: var(--success); cursor: pointer;">
+                <label for="autoLoop" style="font-weight: 600; font-size: 14px; cursor: pointer; color: #0f172a;">Tự mở lại Camera (Chụp liên tục)</label>
+            </div>
+
             <input type="file" accept="image/*" capture="environment" id="nativeCamera" style="display: none;" onchange="handleNativePhoto(event)">
             
             <button class="btn btn-success" onclick="openNativeCamera()" style="padding: 16px;">
                 <i class="fa-solid fa-camera"></i> MỞ CAMERA ĐIỆN THOẠI
             </button>
             
-            <!-- Khu vực thư viện ảnh chọn lọc Zalo -->
             <div id="galleryContainer" class="gallery-container"></div>
-
             <button class="btn btn-zalo" id="shareBtn" onclick="shareSelectedPhotos()">
-                <i class="fa-solid fa-share-nodes"></i> Gửi <span id="photoCount" style="margin: 0 4px; font-weight: bold;">0</span> ảnh qua Zalo
+                <i class="fa-solid fa-share-nodes"></i> Gửi <span id="photoCount">0</span> ảnh qua Zalo
             </button>
         </div>
 
         <!-- 4. Upload Status -->
         <div class="card" id="uploadCard" style="display: none;">
-            <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Trạng thái tải lên Drive</h3>
+            <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Tiến trình tải lên Drive</h3>
             <div id="uploadList"></div>
         </div>
     </div>
@@ -107,36 +99,37 @@
         let globalProjects = [];
         let cachedLocation = null;
         let lastLocationTime = 0;
-        let photoCounter = 0;
-        
-        // Mảng chứa các ảnh chụp trong phiên (phục vụ Gallery & Zalo)
         let galleryItems = []; 
+        let isSyncing = false; // Cờ khóa đồng bộ
 
+        // --- KHỞI TẠO BỘ NHỚ ĐỆM (INDEXED DB) ---
+        let db;
+        const request = indexedDB.open("GeoCameraDB", 1);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+        };
+        request.onsuccess = (e) => { db = e.target.result; checkOfflinePhotos(); };
+        request.onerror = (e) => console.log("Lỗi khởi tạo DB nội bộ");
+
+        // --- KHỞI ĐỘNG WEB ---
         window.onload = function() {
             fetch(GAS_URL).then(res => res.json()).then(data => {
                 globalProjects = data; renderProjectList();
             }).catch(err => {
-                document.getElementById('projectListContent').innerHTML = "❌ Lỗi mạng: Không tải được danh sách.";
+                document.getElementById('projectListContent').innerHTML = "❌ Đang mất mạng, dùng dữ liệu cũ...";
             });
+            // Kiểm tra mạng liên tục, hễ có mạng là tự đẩy ảnh
+            window.addEventListener('online', syncOfflinePhotos);
         };
 
         function renderProjectList() {
             const container = document.getElementById('projectListContent');
             if(globalProjects.length === 0) return container.innerHTML = "Chưa có dự án nào.";
-            let html = '';
-            globalProjects.forEach((p, index) => {
-                html += `
+            container.innerHTML = globalProjects.map(p => `
                 <div class="project-item">
-                    <div class="project-info">
-                        <strong>${p.name}</strong>
-                        <small>Lat: ${p.lat.toFixed(5)} | Lng: ${p.lng.toFixed(5)}</small>
-                    </div>
-                    <button class="btn btn-small" onclick="updateProjectLocation('${p.name}', ${index})">
-                        <i class="fa-solid fa-rotate-right"></i> Cập nhật
-                    </button>
-                </div>`;
-            });
-            container.innerHTML = html;
+                    <div><strong>${p.name}</strong></div>
+                </div>`).join('');
         }
 
         function showToast(message) {
@@ -145,175 +138,172 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        function saveProjectLocation() {
-            const name = document.getElementById('projectName').value.trim();
-            if (!name) return showToast("⚠️ Vui lòng nhập tên dự án!");
-            showToast("Đang lấy định vị...");
-            navigator.geolocation.getCurrentPosition(pos => {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "saveLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude }) })
-                .then(res => res.json()).then(data => {
-                    if(data.status === "success") {
-                        showToast(`✅ Đã thêm: ${name}`); document.getElementById('projectName').value = '';
-                        globalProjects.push({name, lat: pos.coords.latitude, lng: pos.coords.longitude}); renderProjectList();
-                    }
-                });
-            }, err => showToast("❌ Lỗi GPS!"));
-        }
-
-        function updateProjectLocation(name, index) {
-            if(!confirm(`Cập nhật mốc mới cho "${name}"?`)) return;
-            showToast("Đang lấy định vị...");
-            navigator.geolocation.getCurrentPosition(pos => {
-                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "updateLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude }) })
-                .then(res => res.json()).then(data => {
-                    if(data.status === "success") {
-                        showToast(`✅ Đã cập nhật: ${name}`);
-                        globalProjects[index].lat = pos.coords.latitude; globalProjects[index].lng = pos.coords.longitude; renderProjectList();
-                    }
-                });
-            }, err => showToast("❌ Lỗi GPS!"));
-        }
-
-        function updateLocationCache(cb) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; lastLocationTime = Date.now();
-                if(cb) cb();
-            }, () => { if(cb) cb(); });
-        }
-
-        // Tạo tên file chuẩn: IMG_YYYYMMDD_HHMMSS
-        function getFormattedDateTime() {
-            const d = new Date();
-            const pad = (n) => n.toString().padStart(2, '0');
-            return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-        }
-
-        // --- GỌI CAMERA GỐC ---
+        // --- CAMERA GỐC ---
         function openNativeCamera() {
-            // Lấy GPS chạy nền trước khi mở Camera để tối ưu tốc độ nhận diện
             updateLocationCache();
-            // Ra lệnh mở Camera gốc
             document.getElementById('nativeCamera').click();
         }
 
-        // --- XỬ LÝ ẢNH SAU KHI BẤM "OK" TRÊN CAMERA ---
-        function handleNativePhoto(event) {
+        function getFormattedDateTime() {
+            const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+        }
+
+        // Xử lý ảnh sau khi chụp
+        async function handleNativePhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             document.getElementById('uploadCard').style.display = "block";
-            photoCounter++; 
-            const currentPhotoId = photoCounter;
-            
-            // Format lại tên File để upload và share
+            const photoId = Date.now();
             const fileName = `IMG_${getFormattedDateTime()}.jpg`;
-            const newFile = new File([file], fileName, { type: file.type });
 
-            addStatusLog(currentPhotoId, "Đang nén và xử lý ảnh gốc...");
-
-            // 1. Thêm vào Gallery Mini (Hiển thị ngay lập tức, mặc định được tick chọn)
-            const thumbUrl = URL.createObjectURL(newFile);
-            galleryItems.push({ id: currentPhotoId, file: newFile, url: thumbUrl, selected: true });
-            renderGallery();
-
-            // 2. Chuyển thành Base64 và đẩy lên Google Drive
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                
-                // Nếu lấy GPS chưa kịp, đợi GPS rồi mới đẩy, ngược lại đẩy luôn
-                if (!cachedLocation || (Date.now() - lastLocationTime > 120000)) {
-                    updateLocationCache(() => processAndUpload(base64Data, currentPhotoId, fileName));
-                } else { 
-                    processAndUpload(base64Data, currentPhotoId, fileName); 
-                }
-            };
-            reader.readAsDataURL(newFile);
-            
-            // Reset input để sẵn sàng cho lần chụp tiếp theo
-            event.target.value = '';
-        }
-
-        // --- RENDER GALLERY CHỌN ẢNH ZALO ---
-        function renderGallery() {
-            const container = document.getElementById('galleryContainer');
-            const shareBtn = document.getElementById('shareBtn');
-            const countSpan = document.getElementById('photoCount');
-            
-            if (galleryItems.length > 0) {
-                container.style.display = "flex"; shareBtn.style.display = "flex";
-            } else {
-                container.style.display = "none"; shareBtn.style.display = "none"; return;
-            }
-
-            container.innerHTML = '';
-            let selectedCount = 0;
-
-            galleryItems.forEach((item, index) => {
-                if (item.selected) selectedCount++;
-                const div = document.createElement('div');
-                div.className = `gallery-item ${item.selected ? 'selected' : ''}`;
-                div.onclick = () => toggleGalleryItem(index);
-                div.innerHTML = `<img src="${item.url}" />`;
-                container.appendChild(div);
-            });
-
-            countSpan.innerText = selectedCount;
-            // Cuộn tự động đến ảnh cuối cùng
-            container.scrollLeft = container.scrollWidth;
-        }
-
-        function toggleGalleryItem(index) {
-            galleryItems[index].selected = !galleryItems[index].selected;
-            renderGallery();
-        }
-
-        // --- GỬI ZALO ---
-        function shareSelectedPhotos() {
-            const filesToShare = galleryItems.filter(i => i.selected).map(i => i.file);
-            if (filesToShare.length === 0) return showToast("⚠️ Hãy chạm vào ảnh bên dưới để chọn ít nhất 1 ảnh!");
-            
-            if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
-                navigator.share({ files: filesToShare, title: 'Ảnh Khảo Sát', text: 'Gửi từ GeoCamera' })
-                .then(() => { 
-                    showToast("✅ Đã chuyển qua Zalo.");
-                    // Chuyển xong thì làm sạch gallery để chụp đợt mới
-                    galleryItems = []; renderGallery();
-                }).catch(e => console.log(e));
-            } else { showToast("❌ Thiết bị không hỗ trợ chia sẻ nhiều File. Vui lòng dùng Chrome/Safari."); }
-        }
-
-        // --- UPLOAD DRIVE ---
-        function processAndUpload(base64Data, photoId, fileName) {
-            let nearestProject = "Khong_Xac_Dinh", minDistance = 0.2;
+            // 1. Nhận diện dự án qua GPS
+            let nearestProject = "Khong_Xac_Dinh";
             if (cachedLocation && globalProjects.length > 0) {
+                let minDistance = 0.2;
                 globalProjects.forEach(p => {
                     let dist = getDistanceFromLatLonInKm(cachedLocation.lat, cachedLocation.lng, p.lat, p.lng);
                     if (dist < minDistance) { minDistance = dist; nearestProject = p.name; }
                 });
             }
-            updateStatusLog(photoId, `Nhận diện: <b>${nearestProject}</b>. Đang tải lên...`, "status-pending", "fa-spinner fa-spin");
 
-            fetch(GAS_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ image: base64Data, mimeType: "image/jpeg", fileName: fileName, projectName: nearestProject }) 
-            })
-            .then(res => res.json()).then(data => {
-                if(data.status === "success") updateStatusLog(photoId, `Đã lưu <b>${fileName}</b> vào <b>${nearestProject}</b>`, "status-success", "fa-circle-check");
-                else updateStatusLog(photoId, `Lỗi Apps Script: ${data.message}`, "status-error", "fa-circle-xmark");
-            }).catch(() => updateStatusLog(photoId, `Lỗi mạng Internet`, "status-error", "fa-wifi"));
+            // 2. LƯU TẠM VÀO BỘ NHỚ ĐIỆN THOẠI (INDEXED DB)
+            const photoRecord = { id: photoId, file: file, fileName: fileName, projectName: nearestProject };
+            saveToOfflineDB(photoRecord);
+
+            // 3. Hiển thị vào Thư viện Mini để gửi Zalo
+            const thumbUrl = URL.createObjectURL(file);
+            galleryItems.push({ id: photoId, file: new File([file], fileName, {type: file.type}), url: thumbUrl, selected: true });
+            renderGallery();
+            
+            event.target.value = '';
+
+            // 4. Kích hoạt tự động mở camera lại (nếu có bật)
+            if (document.getElementById('autoLoop').checked) {
+                setTimeout(() => document.getElementById('nativeCamera').click(), 600);
+            }
+        }
+
+        // --- CÁC HÀM XỬ LÝ LƯU TRỮ VÀ XÓA ẢNH (OFFLINE) ---
+        function saveToOfflineDB(record) {
+            const tx = db.transaction('photos', 'readwrite');
+            tx.objectStore('photos').add(record);
+            tx.oncomplete = () => {
+                addStatusLog(record.id, `Đã lưu tạm vào máy: <b>${record.fileName}</b>`);
+                checkOfflinePhotos(); // Cập nhật số đếm
+                syncOfflinePhotos();  // Kích hoạt chạy ngầm đưa lên mạng
+            };
+        }
+
+        function checkOfflinePhotos() {
+            const request = db.transaction('photos', 'readonly').objectStore('photos').count();
+            request.onsuccess = () => {
+                const count = request.result;
+                const alertBox = document.getElementById('offlineAlert');
+                if(count > 0) {
+                    alertBox.style.display = 'flex';
+                    document.getElementById('offlineCount').innerText = count;
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            };
+        }
+
+        // --- ĐỒNG BỘ ẢNH LÊN DRIVE (VÀ TỰ ĐỘNG XÓA KHỎI MÁY) ---
+        function syncOfflinePhotos() {
+            if(!navigator.onLine || isSyncing) return; // Không có mạng hoặc đang đồng bộ thì dừng
+            
+            isSyncing = true;
+            const request = db.transaction('photos', 'readonly').objectStore('photos').getAll();
+            
+            request.onsuccess = async () => {
+                const photos = request.result;
+                if(photos.length === 0) { isSyncing = false; return; }
+
+                for(let photo of photos) {
+                    updateStatusLog(photo.id, `Đang đẩy lên Drive: <b>${photo.projectName}</b>...`, "status-pending", "fa-spinner fa-spin");
+                    
+                    // Chuyển File sang Base64 để đẩy lên Apps Script
+                    const base64Data = await convertFileToBase64(photo.file);
+                    
+                    try {
+                        const res = await fetch(GAS_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ image: base64Data, mimeType: photo.file.type, fileName: photo.fileName, projectName: photo.projectName })
+                        });
+                        const data = await res.json();
+
+                        if (data.status === "success") {
+                            updateStatusLog(photo.id, `Đã tải lên & <b>Xóa khỏi bộ nhớ tạm</b>`, "status-success", "fa-circle-check");
+                            // 🔴 XÓA ẢNH KHỎI ĐIỆN THOẠI ĐỂ GIẢI PHÓNG DUNG LƯỢNG
+                            db.transaction('photos', 'readwrite').objectStore('photos').delete(photo.id);
+                            checkOfflinePhotos();
+                        } else {
+                            updateStatusLog(photo.id, `Lỗi Drive, sẽ thử lại sau.`, "status-error", "fa-circle-xmark");
+                        }
+                    } catch (e) {
+                        updateStatusLog(photo.id, `Mất mạng giữa chừng, đang lưu tạm...`, "status-pending", "fa-cloud");
+                        break; // Mất mạng thì ngắt vòng lặp, chờ có mạng chạy lại
+                    }
+                }
+                isSyncing = false;
+            };
+        }
+
+        function convertFileToBase64(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result.split(',')[1]); // Trả về lõi Base64
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- XỬ LÝ ZALO VÀ GIAO DIỆN ---
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer'), shareBtn = document.getElementById('shareBtn'), countSpan = document.getElementById('photoCount');
+            if (galleryItems.length > 0) { container.style.display = "flex"; shareBtn.style.display = "flex"; } 
+            else { container.style.display = "none"; shareBtn.style.display = "none"; return; }
+            container.innerHTML = '';
+            let selectedCount = 0;
+            galleryItems.forEach((item, index) => {
+                if (item.selected) selectedCount++;
+                const div = document.createElement('div');
+                div.className = `gallery-item ${item.selected ? 'selected' : ''}`;
+                div.onclick = () => { galleryItems[index].selected = !galleryItems[index].selected; renderGallery(); };
+                div.innerHTML = `<img src="${item.url}" />`;
+                container.appendChild(div);
+            });
+            countSpan.innerText = selectedCount; container.scrollLeft = container.scrollWidth;
+        }
+
+        function shareSelectedPhotos() {
+            const filesToShare = galleryItems.filter(i => i.selected).map(i => i.file);
+            if (filesToShare.length === 0) return showToast("⚠️ Chọn ít nhất 1 ảnh!");
+            if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
+                navigator.share({ files: filesToShare, title: 'Ảnh Khảo Sát' }).then(() => { 
+                    showToast("✅ Đã chuyển qua App."); galleryItems = []; renderGallery();
+                }).catch(e => console.log(e));
+            } else showToast("❌ Thiết bị không hỗ trợ share file.");
         }
 
         function addStatusLog(id, msg) {
             let list = document.getElementById('uploadList'), div = document.createElement('div');
             div.id = 'log_' + id; div.className = 'upload-item status-pending';
-            div.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><div><b>Ảnh #${id}</b><br>${msg}</div>`;
+            div.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><div><b>Tệp #${String(id).slice(-4)}</b><br>${msg}</div>`;
             list.insertBefore(div, list.firstChild);
         }
         function updateStatusLog(id, msg, cls, icon) {
             let el = document.getElementById('log_' + id);
-            if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Ảnh #${id}</b><br>${msg}</div>`; }
+            if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Tệp #${String(id).slice(-4)}</b><br>${msg}</div>`; }
         }
+
+        function updateLocationCache() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; lastLocationTime = Date.now();
+            }, () => {});
+        }
+
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371, dLat = (lat2-lat1)*(Math.PI/180), dLon = (lon2-lon1)*(Math.PI/180);
             var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2);
