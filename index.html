@@ -134,7 +134,6 @@
                 return;
             }
             
-            // Lấy danh sách dự án (Truyền SHEET_ID qua URL)
             fetch(`${CONFIG.GAS_URL}?sheetId=${CONFIG.SHEET_ID}`).then(res => res.json()).then(data => {
                 globalProjects = data; renderProjectList();
             }).catch(err => {
@@ -178,7 +177,7 @@
                     method: 'POST', 
                     body: JSON.stringify({ 
                         action: "saveLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude,
-                        sheetId: CONFIG.SHEET_ID // Truyền ID sang Apps Script
+                        sheetId: CONFIG.SHEET_ID
                     }) 
                 })
                 .then(res => res.json()).then(data => {
@@ -198,7 +197,7 @@
                     method: 'POST', 
                     body: JSON.stringify({ 
                         action: "updateLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude,
-                        sheetId: CONFIG.SHEET_ID // Truyền ID sang Apps Script
+                        sheetId: CONFIG.SHEET_ID
                     }) 
                 })
                 .then(res => res.json()).then(data => {
@@ -285,6 +284,50 @@
             };
         }
 
+        // --- HÀM UPLOAD CÓ THANH TIẾN TRÌNH (XHR) ---
+        function uploadPhotoWithProgress(photo, base64Data) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', CONFIG.GAS_URL, true);
+                // Không set Content-Type JSON để tránh lỗi CORS Preflight, Apps Script vẫn đọc được payload
+                xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); 
+
+                // Lắng nghe sự kiện tải lên
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const loadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
+                        const totalMB = (e.total / (1024 * 1024)).toFixed(2);
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        
+                        const msg = `Đang tải: <b>${percent}%</b> (${loadedMB} / ${totalMB} MB)<br>Dự án: <b>${photo.projectName}</b>`;
+                        updateStatusLog(photo.id, msg, "status-pending", "fa-spinner fa-spin");
+                    }
+                };
+
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            resolve(data);
+                        } catch(err) { reject(err); }
+                    } else { reject(new Error(xhr.statusText)); }
+                };
+
+                xhr.onerror = function() { reject(new Error("Mất mạng")); };
+
+                const payload = JSON.stringify({ 
+                    image: base64Data, 
+                    mimeType: photo.file.type, 
+                    fileName: photo.fileName, 
+                    projectName: photo.projectName,
+                    sheetId: CONFIG.SHEET_ID,
+                    folderId: CONFIG.FOLDER_ID
+                });
+
+                xhr.send(payload);
+            });
+        }
+
         function syncOfflinePhotos() {
             if(!navigator.onLine || isSyncing) return; 
             
@@ -296,22 +339,10 @@
                 if(photos.length === 0) { isSyncing = false; return; }
 
                 for(let photo of photos) {
-                    updateStatusLog(photo.id, `Đang đẩy lên Drive: <b>${photo.projectName}</b>...`, "status-pending", "fa-spinner fa-spin");
                     const base64Data = await convertFileToBase64(photo.file);
                     
                     try {
-                        const res = await fetch(CONFIG.GAS_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({ 
-                                image: base64Data, 
-                                mimeType: photo.file.type, 
-                                fileName: photo.fileName, 
-                                projectName: photo.projectName,
-                                sheetId: CONFIG.SHEET_ID,  // Truyền ID Sheet
-                                folderId: CONFIG.FOLDER_ID // Truyền ID Folder Drive
-                            })
-                        });
-                        const data = await res.json();
+                        const data = await uploadPhotoWithProgress(photo, base64Data);
 
                         if (data.status === "success") {
                             updateStatusLog(photo.id, `Đã tải lên & <b>Xóa khỏi máy</b>`, "status-success", "fa-circle-check");
@@ -368,12 +399,15 @@
         function addStatusLog(id, msg) {
             let list = document.getElementById('uploadList'), div = document.createElement('div');
             div.id = 'log_' + id; div.className = 'upload-item status-pending';
-            div.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><div><b>Tệp #${String(id).slice(-4)}</b><br>${msg}</div>`;
+            div.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><div><b>Tệp #${String(id).slice(-4)}</b><br><span id="msg_${id}">${msg}</span></div>`;
             list.insertBefore(div, list.firstChild);
         }
         function updateStatusLog(id, msg, cls, icon) {
             let el = document.getElementById('log_' + id);
-            if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Tệp #${String(id).slice(-4)}</b><br>${msg}</div>`; }
+            if (el) { 
+                el.className = `upload-item ${cls}`; 
+                el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Tệp #${String(id).slice(-4)}</b><br><span id="msg_${id}">${msg}</span></div>`; 
+            }
         }
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
