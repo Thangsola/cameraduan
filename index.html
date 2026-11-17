@@ -117,12 +117,16 @@
         let galleryItems = []; 
         let isSyncing = false; 
 
-        // --- KHỞI TẠO BỘ NHỚ ĐỆM (INDEXED DB) ---
+        // --- KHỞI TẠO BỘ NHỚ ĐỆM (INDEXED DB - Bản số 3 để chống kẹt) ---
         let db;
-        const request = indexedDB.open("GeoCameraDB", 1);
+        const request = indexedDB.open("GeoCameraDB", 3);
         request.onupgradeneeded = (e) => {
             db = e.target.result;
-            if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+            // Xóa rác cũ nếu có, tạo kho mới
+            if(db.objectStoreNames.contains('photos')) {
+                db.deleteObjectStore('photos');
+            }
+            db.createObjectStore('photos', { keyPath: 'id' });
         };
         request.onsuccess = (e) => { db = e.target.result; checkOfflinePhotos(); };
         request.onerror = (e) => console.log("Lỗi khởi tạo DB nội bộ");
@@ -243,24 +247,21 @@
                 });
             }
 
-            // LƯU TẠM VÀO BỘ NHỚ ĐIỆN THOẠI (INDEXED DB)
             const photoRecord = { id: photoId, file: file, fileName: fileName, projectName: nearestProject };
             saveToOfflineDB(photoRecord);
 
-            // Hiển thị vào Thư viện Mini Zalo
             const thumbUrl = URL.createObjectURL(file);
             galleryItems.push({ id: photoId, file: new File([file], fileName, {type: file.type}), url: thumbUrl, selected: true });
             renderGallery();
             
             event.target.value = '';
 
-            // TỰ ĐỘNG MỞ LẠI CAMERA
             if (document.getElementById('autoLoop').checked) {
                 setTimeout(() => document.getElementById('nativeCamera').click(), 600);
             }
         }
 
-        // --- OFFLINE SYNC (LƯU & XÓA) ---
+        // --- OFFLINE SYNC ---
         function saveToOfflineDB(record) {
             const tx = db.transaction('photos', 'readwrite');
             tx.objectStore('photos').add(record);
@@ -284,15 +285,12 @@
             };
         }
 
-        // --- HÀM UPLOAD CÓ THANH TIẾN TRÌNH (XHR) ---
         function uploadPhotoWithProgress(photo, base64Data) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', CONFIG.GAS_URL, true);
-                // Không set Content-Type JSON để tránh lỗi CORS Preflight, Apps Script vẫn đọc được payload
                 xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); 
 
-                // Lắng nghe sự kiện tải lên
                 xhr.upload.onprogress = function(e) {
                     if (e.lengthComputable) {
                         const loadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
