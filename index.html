@@ -121,9 +121,9 @@
         let galleryItems = []; 
         let isSyncing = false; 
 
-        // --- KHỞI TẠO BỘ NHỚ ĐỆM (INDEXED DB - Bản số 3 để chống kẹt) ---
+        // --- KHỞI TẠO BỘ NHỚ ĐỆM (Phiên bản số 4 - Ép xóa ảnh kẹt cũ) ---
         let db;
-        const request = indexedDB.open("GeoCameraDB", 3);
+        const request = indexedDB.open("GeoCameraDB", 4);
         request.onupgradeneeded = (e) => {
             db = e.target.result;
             if(db.objectStoreNames.contains('photos')) {
@@ -269,7 +269,7 @@
             const tx = db.transaction('photos', 'readwrite');
             tx.objectStore('photos').add(record);
             tx.oncomplete = () => {
-                addStatusLog(record.id, `Đã lưu tạm vào máy: <b>${record.fileName}</b>`);
+                addStatusLog(record.id, `Đã lưu tạm: <b>${record.fileName}</b>`);
                 checkOfflinePhotos(); 
                 syncOfflinePhotos();  
             };
@@ -288,44 +288,39 @@
             };
         }
 
-        function uploadPhotoWithProgress(photo, base64Data) {
+        // DÙNG % MÔ PHỎNG ĐỂ LÁCH LỖI BẢO MẬT CỦA GOOGLE
+        function uploadPhotoWithFakeProgress(photo, base64Data) {
             return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', GAS_URL, true);
-                xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); 
+                let percent = 0;
+                let interval = setInterval(() => {
+                    percent += Math.floor(Math.random() * 15) + 5; 
+                    if (percent > 95) percent = 95; 
+                    
+                    const msg = `Đang tải: <b>${percent}%</b>...<br>Dự án: <b>${photo.projectName}</b>`;
+                    updateStatusLog(photo.id, msg, "status-pending", "fa-spinner fa-spin");
+                }, 500);
 
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const loadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
-                        const totalMB = (e.total / (1024 * 1024)).toFixed(2);
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        
-                        const msg = `Đang tải: <b>${percent}%</b> (${loadedMB} / ${totalMB} MB)<br>Dự án: <b>${photo.projectName}</b>`;
-                        updateStatusLog(photo.id, msg, "status-pending", "fa-spinner fa-spin");
-                    }
-                };
-
-                xhr.onload = function() {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const data = JSON.parse(xhr.responseText);
-                            resolve(data);
-                        } catch(err) { reject(err); }
-                    } else { reject(new Error(xhr.statusText)); }
-                };
-
-                xhr.onerror = function() { reject(new Error("Mất mạng")); };
-
-                const payload = JSON.stringify({ 
-                    image: base64Data, 
-                    mimeType: photo.file.type, 
-                    fileName: photo.fileName, 
-                    projectName: photo.projectName,
-                    sheetId: SHEET_ID,
-                    folderId: FOLDER_ID
+                // Fetch bình thường để tránh lỗi CORS Preflight
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        image: base64Data, 
+                        mimeType: photo.file.type, 
+                        fileName: photo.fileName, 
+                        projectName: photo.projectName,
+                        sheetId: SHEET_ID,
+                        folderId: FOLDER_ID
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    clearInterval(interval);
+                    resolve(data);
+                })
+                .catch(err => {
+                    clearInterval(interval);
+                    reject(err);
                 });
-
-                xhr.send(payload);
             });
         }
 
@@ -343,10 +338,10 @@
                     const base64Data = await convertFileToBase64(photo.file);
                     
                     try {
-                        const data = await uploadPhotoWithProgress(photo, base64Data);
+                        const data = await uploadPhotoWithFakeProgress(photo, base64Data);
 
                         if (data.status === "success") {
-                            updateStatusLog(photo.id, `Đã tải lên & <b>Xóa khỏi máy</b>`, "status-success", "fa-circle-check");
+                            updateStatusLog(photo.id, `Đã tải lên <b>100%</b> & <b>Đã dọn dẹp</b>`, "status-success", "fa-circle-check");
                             db.transaction('photos', 'readwrite').objectStore('photos').delete(photo.id);
                             checkOfflinePhotos();
                         } else {
