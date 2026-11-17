@@ -22,7 +22,12 @@
         .btn-success { background: var(--success); color: white; font-size: 17px; }
         .btn-warning { background: var(--warning); color: white; margin-top: 10px; }
         .btn-zalo { background: var(--zalo); color: white; margin-top: 15px; display: none; }
+        .btn-small { padding: 6px 12px; font-size: 13px; width: auto; background: #f1f5f9; color: var(--primary); border: 1px solid #cbd5e1; }
         
+        .project-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+        .project-info strong { color: var(--primary); font-size: 15px; display: block; margin-bottom: 4px; }
+        .project-info small { color: #64748b; font-size: 12px; }
+
         .offline-status { background: #fffbeb; border: 1px solid #fcd34d; color: #b45309; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; display: none; }
         
         /* Gallery Zalo */
@@ -30,7 +35,7 @@
         .gallery-item { position: relative; width: 80px; height: 80px; border-radius: 8px; flex-shrink: 0; border: 3px solid transparent; transition: 0.2s; overflow: hidden; cursor: pointer; }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
         .gallery-item.selected { border-color: var(--success); }
-        .gallery-item.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 4px; right: 4px; color: var(--success); background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .gallery-item.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 4px; right: 4px; color: var(--success); background: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .upload-item { padding: 12px; border-radius: 8px; background: #f1f5f9; margin-bottom: 8px; font-size: 14px; display: flex; gap: 10px; }
         .status-success i { color: var(--success); }
@@ -46,20 +51,20 @@
 <body>
 
     <div class="header">
-        <h2><i class="fa-solid fa-location-crosshairs"></i> GeoCamera Offline Pro</h2>
+        <h2><i class="fa-solid fa-location-crosshairs"></i> GeoCamera Khảo Sát</h2>
     </div>
 
     <div class="container">
         <!-- 1. Danh sách dự án -->
         <div class="card" id="projectListCard">
-            <h3><i class="fa-solid fa-server" style="color: var(--primary);"></i> Dự án đang quản lý (Google Sheets)</h3>
+            <h3><i class="fa-solid fa-server" style="color: var(--primary);"></i> Dự án đang quản lý (Sheets)</h3>
             <div id="projectListContent" style="font-size: 14px; color: #64748b;">⏳ Đang đồng bộ...</div>
         </div>
 
         <!-- 2. Hộp thoại Offline -->
         <div class="offline-status" id="offlineAlert">
-            <span><i class="fa-solid fa-cloud-arrow-up"></i> Có <span id="offlineCount">0</span> ảnh đang chờ lên mạng</span>
-            <button class="btn btn-warning" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="syncOfflinePhotos()">Đẩy lên Drive</button>
+            <span><i class="fa-solid fa-cloud-arrow-up"></i> Đang kẹt <span id="offlineCount">0</span> ảnh chưa lên Drive</span>
+            <button class="btn btn-warning" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="syncOfflinePhotos()">Tải lên ngay</button>
         </div>
 
         <!-- 3. CAMERA GỐC -->
@@ -68,7 +73,7 @@
             
             <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                 <input type="checkbox" id="autoLoop" checked style="width: 22px; height: 22px; accent-color: var(--success); cursor: pointer;">
-                <label for="autoLoop" style="font-weight: 600; font-size: 14px; cursor: pointer; color: #0f172a;">Tự mở lại Camera (Chụp liên tục)</label>
+                <label for="autoLoop" style="font-weight: 600; font-size: 14px; cursor: pointer; color: #0f172a;">Tự động mở lại Camera (Chụp liên tục)</label>
             </div>
 
             <input type="file" accept="image/*" capture="environment" id="nativeCamera" style="display: none;" onchange="handleNativePhoto(event)">
@@ -83,24 +88,34 @@
             </button>
         </div>
 
-        <!-- 4. Upload Status -->
+        <!-- 4. Thêm dự án -->
+        <div class="card">
+            <h3><i class="fa-solid fa-map-pin" style="color: var(--danger);"></i> Cắm mốc dự án mới</h3>
+            <input type="text" id="projectName" placeholder="Nhập tên dự án (VD: Du_An_A)">
+            <button class="btn btn-primary" onclick="saveProjectLocation()">
+                <i class="fa-solid fa-location-dot"></i> Lưu Tọa Độ Hiện Tại
+            </button>
+        </div>
+
+        <!-- 5. Upload Status -->
         <div class="card" id="uploadCard" style="display: none;">
-            <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Tiến trình tải lên Drive</h3>
+            <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Tiến trình Drive</h3>
             <div id="uploadList"></div>
         </div>
     </div>
 
     <div id="toast"></div>
 
-    <script>
-        // 🔴 BẮT BUỘC: THAY URL WEB APP CỦA BẠN VÀO ĐÂY:
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzzr1ayOTiOlCct8nS3U5XgRk6dPf6y0QZQ_fRg9eSuknCnkrdEu1UAvlxWE-5CG4wH/exec"; 
+    <!-- 🔴 GỌI THÔNG TIN TỪ FILE config.js Ở ĐÂY -->
+    <script src="config.js"></script>
 
+    <!-- TOÀN BỘ CODE XỬ LÝ -->
+    <script>
         let globalProjects = [];
         let cachedLocation = null;
         let lastLocationTime = 0;
         let galleryItems = []; 
-        let isSyncing = false; // Cờ khóa đồng bộ
+        let isSyncing = false; 
 
         // --- KHỞI TẠO BỘ NHỚ ĐỆM (INDEXED DB) ---
         let db;
@@ -114,22 +129,37 @@
 
         // --- KHỞI ĐỘNG WEB ---
         window.onload = function() {
-            fetch(GAS_URL).then(res => res.json()).then(data => {
+            if (typeof CONFIG === 'undefined') {
+                document.getElementById('projectListContent').innerHTML = "❌ Lỗi: Chưa tìm thấy file config.js";
+                return;
+            }
+            
+            // Lấy danh sách dự án (Truyền SHEET_ID qua URL)
+            fetch(`${CONFIG.GAS_URL}?sheetId=${CONFIG.SHEET_ID}`).then(res => res.json()).then(data => {
                 globalProjects = data; renderProjectList();
             }).catch(err => {
                 document.getElementById('projectListContent').innerHTML = "❌ Đang mất mạng, dùng dữ liệu cũ...";
             });
-            // Kiểm tra mạng liên tục, hễ có mạng là tự đẩy ảnh
             window.addEventListener('online', syncOfflinePhotos);
         };
 
         function renderProjectList() {
             const container = document.getElementById('projectListContent');
             if(globalProjects.length === 0) return container.innerHTML = "Chưa có dự án nào.";
-            container.innerHTML = globalProjects.map(p => `
+            let html = '';
+            globalProjects.forEach((p, index) => {
+                html += `
                 <div class="project-item">
-                    <div><strong>${p.name}</strong></div>
-                </div>`).join('');
+                    <div class="project-info">
+                        <strong>${p.name}</strong>
+                        <small>Lat: ${p.lat.toFixed(5)} | Lng: ${p.lng.toFixed(5)}</small>
+                    </div>
+                    <button class="btn btn-small" onclick="updateProjectLocation('${p.name}', ${index})">
+                        <i class="fa-solid fa-rotate-right"></i> Cập nhật
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
         }
 
         function showToast(message) {
@@ -138,10 +168,58 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
+        // --- QUẢN LÝ DỰ ÁN ---
+        function saveProjectLocation() {
+            const name = document.getElementById('projectName').value.trim();
+            if (!name) return showToast("⚠️ Vui lòng nhập tên dự án!");
+            showToast("Đang lấy định vị...");
+            navigator.geolocation.getCurrentPosition(pos => {
+                fetch(CONFIG.GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: "saveLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude,
+                        sheetId: CONFIG.SHEET_ID // Truyền ID sang Apps Script
+                    }) 
+                })
+                .then(res => res.json()).then(data => {
+                    if(data.status === "success") {
+                        showToast(`✅ Đã thêm: ${name}`); document.getElementById('projectName').value = '';
+                        globalProjects.push({name, lat: pos.coords.latitude, lng: pos.coords.longitude}); renderProjectList();
+                    }
+                });
+            }, err => showToast("❌ Lỗi GPS!"));
+        }
+
+        function updateProjectLocation(name, index) {
+            if(!confirm(`Cập nhật mốc mới cho "${name}"?`)) return;
+            showToast("Đang lấy định vị...");
+            navigator.geolocation.getCurrentPosition(pos => {
+                fetch(CONFIG.GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: "updateLocation", projectName: name, lat: pos.coords.latitude, lng: pos.coords.longitude,
+                        sheetId: CONFIG.SHEET_ID // Truyền ID sang Apps Script
+                    }) 
+                })
+                .then(res => res.json()).then(data => {
+                    if(data.status === "success") {
+                        showToast(`✅ Đã cập nhật: ${name}`);
+                        globalProjects[index].lat = pos.coords.latitude; globalProjects[index].lng = pos.coords.longitude; renderProjectList();
+                    }
+                });
+            }, err => showToast("❌ Lỗi GPS!"));
+        }
+
         // --- CAMERA GỐC ---
         function openNativeCamera() {
             updateLocationCache();
             document.getElementById('nativeCamera').click();
+        }
+
+        function updateLocationCache() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; lastLocationTime = Date.now();
+            }, () => {});
         }
 
         function getFormattedDateTime() {
@@ -149,7 +227,6 @@
             return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
         }
 
-        // Xử lý ảnh sau khi chụp
         async function handleNativePhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -158,7 +235,6 @@
             const photoId = Date.now();
             const fileName = `IMG_${getFormattedDateTime()}.jpg`;
 
-            // 1. Nhận diện dự án qua GPS
             let nearestProject = "Khong_Xac_Dinh";
             if (cachedLocation && globalProjects.length > 0) {
                 let minDistance = 0.2;
@@ -168,31 +244,31 @@
                 });
             }
 
-            // 2. LƯU TẠM VÀO BỘ NHỚ ĐIỆN THOẠI (INDEXED DB)
+            // LƯU TẠM VÀO BỘ NHỚ ĐIỆN THOẠI (INDEXED DB)
             const photoRecord = { id: photoId, file: file, fileName: fileName, projectName: nearestProject };
             saveToOfflineDB(photoRecord);
 
-            // 3. Hiển thị vào Thư viện Mini để gửi Zalo
+            // Hiển thị vào Thư viện Mini Zalo
             const thumbUrl = URL.createObjectURL(file);
             galleryItems.push({ id: photoId, file: new File([file], fileName, {type: file.type}), url: thumbUrl, selected: true });
             renderGallery();
             
             event.target.value = '';
 
-            // 4. Kích hoạt tự động mở camera lại (nếu có bật)
+            // TỰ ĐỘNG MỞ LẠI CAMERA
             if (document.getElementById('autoLoop').checked) {
                 setTimeout(() => document.getElementById('nativeCamera').click(), 600);
             }
         }
 
-        // --- CÁC HÀM XỬ LÝ LƯU TRỮ VÀ XÓA ẢNH (OFFLINE) ---
+        // --- OFFLINE SYNC (LƯU & XÓA) ---
         function saveToOfflineDB(record) {
             const tx = db.transaction('photos', 'readwrite');
             tx.objectStore('photos').add(record);
             tx.oncomplete = () => {
                 addStatusLog(record.id, `Đã lưu tạm vào máy: <b>${record.fileName}</b>`);
-                checkOfflinePhotos(); // Cập nhật số đếm
-                syncOfflinePhotos();  // Kích hoạt chạy ngầm đưa lên mạng
+                checkOfflinePhotos(); 
+                syncOfflinePhotos();  
             };
         }
 
@@ -202,17 +278,15 @@
                 const count = request.result;
                 const alertBox = document.getElementById('offlineAlert');
                 if(count > 0) {
-                    alertBox.style.display = 'flex';
-                    document.getElementById('offlineCount').innerText = count;
+                    alertBox.style.display = 'flex'; document.getElementById('offlineCount').innerText = count;
                 } else {
                     alertBox.style.display = 'none';
                 }
             };
         }
 
-        // --- ĐỒNG BỘ ẢNH LÊN DRIVE (VÀ TỰ ĐỘNG XÓA KHỎI MÁY) ---
         function syncOfflinePhotos() {
-            if(!navigator.onLine || isSyncing) return; // Không có mạng hoặc đang đồng bộ thì dừng
+            if(!navigator.onLine || isSyncing) return; 
             
             isSyncing = true;
             const request = db.transaction('photos', 'readonly').objectStore('photos').getAll();
@@ -223,28 +297,32 @@
 
                 for(let photo of photos) {
                     updateStatusLog(photo.id, `Đang đẩy lên Drive: <b>${photo.projectName}</b>...`, "status-pending", "fa-spinner fa-spin");
-                    
-                    // Chuyển File sang Base64 để đẩy lên Apps Script
                     const base64Data = await convertFileToBase64(photo.file);
                     
                     try {
-                        const res = await fetch(GAS_URL, {
+                        const res = await fetch(CONFIG.GAS_URL, {
                             method: 'POST',
-                            body: JSON.stringify({ image: base64Data, mimeType: photo.file.type, fileName: photo.fileName, projectName: photo.projectName })
+                            body: JSON.stringify({ 
+                                image: base64Data, 
+                                mimeType: photo.file.type, 
+                                fileName: photo.fileName, 
+                                projectName: photo.projectName,
+                                sheetId: CONFIG.SHEET_ID,  // Truyền ID Sheet
+                                folderId: CONFIG.FOLDER_ID // Truyền ID Folder Drive
+                            })
                         });
                         const data = await res.json();
 
                         if (data.status === "success") {
-                            updateStatusLog(photo.id, `Đã tải lên & <b>Xóa khỏi bộ nhớ tạm</b>`, "status-success", "fa-circle-check");
-                            // 🔴 XÓA ẢNH KHỎI ĐIỆN THOẠI ĐỂ GIẢI PHÓNG DUNG LƯỢNG
+                            updateStatusLog(photo.id, `Đã tải lên & <b>Xóa khỏi máy</b>`, "status-success", "fa-circle-check");
                             db.transaction('photos', 'readwrite').objectStore('photos').delete(photo.id);
                             checkOfflinePhotos();
                         } else {
-                            updateStatusLog(photo.id, `Lỗi Drive, sẽ thử lại sau.`, "status-error", "fa-circle-xmark");
+                            updateStatusLog(photo.id, `Lỗi Drive, thử lại sau.`, "status-error", "fa-circle-xmark");
                         }
                     } catch (e) {
-                        updateStatusLog(photo.id, `Mất mạng giữa chừng, đang lưu tạm...`, "status-pending", "fa-cloud");
-                        break; // Mất mạng thì ngắt vòng lặp, chờ có mạng chạy lại
+                        updateStatusLog(photo.id, `Mất mạng, đang chờ đẩy lại...`, "status-pending", "fa-cloud");
+                        break; 
                     }
                 }
                 isSyncing = false;
@@ -254,12 +332,12 @@
         function convertFileToBase64(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result.split(',')[1]); // Trả về lõi Base64
+                reader.onload = (e) => resolve(e.target.result.split(',')[1]);
                 reader.readAsDataURL(file);
             });
         }
 
-        // --- XỬ LÝ ZALO VÀ GIAO DIỆN ---
+        // --- ZALO GALLERY ---
         function renderGallery() {
             const container = document.getElementById('galleryContainer'), shareBtn = document.getElementById('shareBtn'), countSpan = document.getElementById('photoCount');
             if (galleryItems.length > 0) { container.style.display = "flex"; shareBtn.style.display = "flex"; } 
@@ -296,12 +374,6 @@
         function updateStatusLog(id, msg, cls, icon) {
             let el = document.getElementById('log_' + id);
             if (el) { el.className = `upload-item ${cls}`; el.innerHTML = `<i class="fa-solid ${icon}"></i><div><b>Tệp #${String(id).slice(-4)}</b><br>${msg}</div>`; }
-        }
-
-        function updateLocationCache() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; lastLocationTime = Date.now();
-            }, () => {});
         }
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
